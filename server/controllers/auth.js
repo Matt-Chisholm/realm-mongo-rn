@@ -39,3 +39,25 @@ export const register = async (req, res) => {
     console.log("Register error : ", err);
   }
 };
+
+// Login User
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    !user && res.status(404).json("User not found");
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    !validPassword && res.status(400).json("Wrong password");
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "5d",
+    });
+
+    delete user.password;
+    res.status(200).json({ user, token });
+  } catch (err) {
+    res.status(500).json(err);
+    console.log("Login error : ", err);
+  }
+};
